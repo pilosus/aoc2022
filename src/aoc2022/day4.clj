@@ -4,9 +4,6 @@
    [aoc2022.aoc2022 :as tools]
    [clojure.string :as string]))
 
-(def p1 "36-92,40-78") ;; contains
-(def p2 "36-92,10-78") ;; doesn't contain
-
 (defn range-str->int
   [s]
   (let [[ls rs] (string/split s #"\-")]
