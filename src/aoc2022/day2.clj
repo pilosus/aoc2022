@@ -1,8 +1,8 @@
 (ns aoc2022.day2
   "https://adventofcode.com/2022/day/2"
-  (:require [clojure.string :as string]))
-
-(def INPUT-PATH "resources/input/day2.txt")
+  (:require
+   [aoc2022.aoc2022 :as tools]
+   [clojure.string :as string]))
 
 (def letter->shape
   {"A" :rock
@@ -74,17 +74,11 @@
         shape-score (get weights player-2)]
     (+ game-score shape-score)))
 
-(defn path->lines
-  [path]
-  (-> path
-      slurp
-      string/split-lines))
-
 (defn total-score-two-shapes
   "Return a total score for all games from the file where each game is a
   pair of shape-shape"
-  [path]
-  (let [lines (path->lines path)
+  []
+  (let [lines (-> (tools/input-path) tools/path->lines)
         pairs (->> lines
                    (map #(string/split % #"\s+"))
                    (map (fn [v]
@@ -99,8 +93,8 @@
 (defn total-score-shape-outcome
   "Return a total score for all games from the file where each game is a
   pair of shape-outcome"
-  [path]
-  (let [lines (path->lines path)
+  []
+  (let [lines (-> (tools/input-path) tools/path->lines)
         pairs (->> lines
                    (map #(string/split % #"\s+"))
                    (map (fn [v]
@@ -115,7 +109,7 @@
     score))
 
 (comment
-  ;; Part 1
-  (total-score-two-shapes INPUT-PATH)
-  ;; Part 2
-  (total-score-shape-outcome INPUT-PATH))
+  ;; Part 1 - 10816
+  (total-score-two-shapes)
+  ;; Part 2 - 11657
+  (total-score-shape-outcome))
