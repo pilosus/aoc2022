@@ -16,3 +16,8 @@
                 (string/split #"\.")
                 last)]
     (format "resources/input/%s.txt" day)))
+
+(defn str->vec
+  "Return a vector of letters"
+  [s]
+  (string/split s #""))

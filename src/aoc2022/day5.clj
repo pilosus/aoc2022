@@ -1,8 +1,7 @@
 (ns aoc2022.day5
   "https://adventofcode.com/2022/day/5"
   (:require
-   [aoc2022.aoc2022 :as tools]
-   [clojure.string :as string]))
+   [aoc2022.aoc2022 :as tools]))
 
 (def stack-storage
   {1 ["B" "W" "N"]
