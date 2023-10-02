@@ -21,3 +21,8 @@
   "Return a vector of letters"
   [s]
   (string/split s #""))
+
+(defn str->int
+  "Parse string into an integer"
+  [s]
+  (Integer/parseInt s))
