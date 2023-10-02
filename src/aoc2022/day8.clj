@@ -81,8 +81,69 @@
         visible-coords (matrix->visible-coords matrix)]
     (count visible-coords)))
 
+;; Part 2
+
+(defn calc-score
+  "Return scenery score for a given tree height and other heights"
+  [height values]
+  (loop [vs (seq values)
+         seen 0]
+    (if (empty? vs)
+      seen
+      (let [curr (first vs)]
+        (if (>= curr height)
+          (inc seen)
+          (recur (next vs) (inc seen)))))))
+
+(defn- update-scores
+  "If old value doesn't exist, return new, otherwise multiply old and new"
+  [old-val new-val]
+  (if old-val
+    (* old-val new-val)
+    new-val))
+
+(defn row-scores
+  "Return a vector of maps of coord to scenery score for a given row
+  Trees are represented as [index height]"
+  [tree-row]
+  (loop [vs (seq tree-row)
+         coord->score {}]
+    (if (empty? vs)
+      coord->score
+      (let [[idx height] (first vs)
+            tail (->> vs rest (map second))
+            score (calc-score height tail)]
+        (recur
+         (next vs)
+         (update coord->score idx
+                 update-scores
+                 score))))))
+
+(defn matrix->scores
+  "Return a map of coordinate to scenery score"
+  [mi]
+  (let [score-maps
+        (->> mi
+             matrix->all-rows
+             (map row-scores))
+        scores (apply merge-with update-scores score-maps)]
+    scores))
+
+(defn max-scenery-score
+  "Return the maximum scenery score for the input"
+  []
+  (let [lines (-> (tools/input-path)
+                  tools/path->lines)
+        scores (->> lines
+                    (map tools/str->vec)
+                    (mapv #(mapv tools/str->int %))
+                    matrix-indexed
+                    matrix->scores)
+        max-val (apply max (vals scores))]
+    max-val))
+
 (comment
   ;; Part 1 - 1672
   (count-visible-trees)
-  ;; Part 2 -
-  )
+  ;; Part 2 - 327180
+  (max-scenery-score))
