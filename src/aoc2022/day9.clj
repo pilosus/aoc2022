@@ -72,8 +72,13 @@
   (reduce
    (fn [acc head-pos]
      (let [tail-pos-curr (if (empty? acc) tail-pos (last acc))
-           tail-pos-new (tail-step tail-pos-curr head-pos)]
-       (conj acc tail-pos-new)))
+           tail-pos-new (tail-step tail-pos-curr head-pos)
+           stay? (= tail-pos-curr tail-pos-new)]
+       ;; when acc is empty, add the very tail-pos to the acc
+       ;; to avoid of-by-one error
+       (if (and (seq acc) stay?)
+         acc
+         (conj acc tail-pos-new))))
    []
    head-pos-seq))
 
@@ -147,9 +152,10 @@
 
 (comment
   ;; Part 1 - 5619
-  ;; Perf: 2'500 msec, okay-ish
+  ;; Perf: 1'935 msec, okay-ish
   (unique-tail-pos)
 
   ;; Part 2 - 2376
-  ;; Perf: 20'000 msec, too bad, memoization needed
+  ;; Perf: 5'130 msec, well, could have been better,
+  ;; but still 4x faster than in first version
   (count-tail-pos 9))
