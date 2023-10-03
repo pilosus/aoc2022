@@ -4,6 +4,8 @@
    [aoc2022.aoc2022 :as tools]
    [clojure.string :as string]))
 
+;; Part 1 - Signal strength
+
 (defn line->cmd
   [l]
   (let [[cmd v] (string/split l #"\s+")
@@ -51,8 +53,56 @@
                             signal-strength)]
     total-strength))
 
+;; Part 2 - screen rendering
+
+(defn pos->pixel
+  "Given CRT relative position [0..39] and 3px wide sprite center
+  position [0 39] return a pixel being drawn"
+  [crt-pos sprite-pos]
+  (let [overlaps? (and (>= crt-pos (dec sprite-pos))
+                       (<= crt-pos (inc sprite-pos)))]
+    (if overlaps?
+      "#"
+      ".")))
+
+(defn sprites->crt
+  "Given sprite positions and the CRT size, return a string representing
+  drawn CRT lines of pixels"
+  [sprites crt-length crt-height]
+  (let [pixels (loop [crt-positions (range (* crt-length crt-height))
+                      row 1
+                      result []]
+                 (if (empty? crt-positions)
+                   result
+                   (let [crt-pos (first crt-positions)
+                         crt-relative-pos (mod crt-pos crt-length)
+                         sprite-pos (nth sprites crt-pos)
+                         pixel (pos->pixel crt-relative-pos sprite-pos)]
+                     (recur (next crt-positions)
+                            (inc row)
+                            (conj result pixel)))))
+        lines (->> pixels
+                   (partition crt-length)
+                   (map #(string/join "" %)))
+        crt (string/join "\n" lines)]
+    crt))
+
+(defn render-screen
+  "Return a string representing rendered screen"
+  []
+  (let [lines (-> (tools/input-path)
+                  tools/path->lines)
+        register-cycles (->> lines
+                             (map line->cmd)
+                             (generate-register-states 1))
+        sprites (->> register-cycles
+                     rest
+                     butlast)
+        crt (sprites->crt sprites 40 6)]
+    crt))
+
 (comment
   ;; Part 1 - 13720
   (calc-total-strength)
-  ;; Part 2 -
-  )
+  ;; Part 2 - FBURHZCH
+  (print (render-screen)))
