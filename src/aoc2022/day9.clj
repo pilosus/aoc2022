@@ -106,6 +106,7 @@
     [])))
 
 (defn unique-tail-pos
+  "Return number positions that the tail visits at least once"
   []
   (let [lines (-> (tools/input-path)
                   tools/path->lines)
@@ -120,22 +121,25 @@
     visited-at-least-once))
 
 (defn multi-tail-path
-  [start-pos moves tails]
+  "Return seq of positions of the last tail of the n-tails for a given
+  start position of each tail and the head and given head moves."
+  [start-pos moves n-tails]
   (loop [route (full-head-route start-pos moves)
-         counter tails]
+         counter n-tails]
     (if (pos? counter)
       (let [new-route (tail-path start-pos route)]
         (recur new-route (dec counter)))
       route)))
 
 (defn count-tail-pos
-  [tails]
+  "Return number positions that the last of n-tail visits at least once"
+  [n-tails]
   (let [lines (-> (tools/input-path)
                   tools/path->lines)
         moves (->> lines
                    (map line->move))
         start-pos [0 0]
-        tail-9th-route (multi-tail-path start-pos moves tails)
+        tail-9th-route (multi-tail-path start-pos moves n-tails)
         visited-at-least-once (-> tail-9th-route
                                   set
                                   count)]
