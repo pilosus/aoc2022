@@ -119,6 +119,33 @@
                                   count)]
     visited-at-least-once))
 
+(defn multi-tail-path
+  [start-pos moves tails]
+  (loop [route (full-head-route start-pos moves)
+         counter tails]
+    (if (pos? counter)
+      (let [new-route (tail-path start-pos route)]
+        (recur new-route (dec counter)))
+      route)))
+
+(defn count-tail-pos
+  [tails]
+  (let [lines (-> (tools/input-path)
+                  tools/path->lines)
+        moves (->> lines
+                   (map line->move))
+        start-pos [0 0]
+        tail-9th-route (multi-tail-path start-pos moves tails)
+        visited-at-least-once (-> tail-9th-route
+                                  set
+                                  count)]
+    visited-at-least-once))
+
 (comment
   ;; Part 1 - 5619
-  (unique-tail-pos))
+  ;; Perf: 2'500 msec, okay-ish
+  (unique-tail-pos)
+
+  ;; Part 2 - 2376
+  ;; Perf: 20'000 msec, too bad, memoization needed
+  (count-tail-pos 9))
