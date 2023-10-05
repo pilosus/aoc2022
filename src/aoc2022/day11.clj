@@ -2,7 +2,6 @@
   "https://adventofcode.com/2022/day/11"
   (:require
    [aoc2022.aoc2022 :as tools]
-   [clojure.core.match :refer [match]]
    [clojure.string :as string]))
 
 (def expr-regex #"(?s)(?<v1>old)\s+(?<op>[\*\+\-])\s+(?<v2>(old|[0-9]*))")
