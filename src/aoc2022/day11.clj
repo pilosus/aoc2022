@@ -97,8 +97,8 @@
   (assoc monkey :gcd gcd))
 
 (defn calc-gcd
-  "Calculate greates common divisor for all monkeys.
-  NB! Input data contains only prime divisors, that's why simply
+  "Calculate greatest common divisor for all monkeys.
+  NB! Input data contains only prime divisors, that's why simple
   multiplication will do!"
   [monkeys]
   (reduce
