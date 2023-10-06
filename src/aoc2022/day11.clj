@@ -52,24 +52,13 @@
 (defn parse-monkey
   "Return a map with the parsed data about a monkey"
   [line]
-  (let [[monkey-idx
-         starting-items
-         operation
-         test-condition
-         true-branch
-         false-branch] (-> line (string/split-lines))
-        items (parse-items starting-items)
-        monkey (str->int monkey-idx)
-        op (parse-expr operation)
-        test-divisor (str->int test-condition)
-        test-true (str->int true-branch)
-        test-false (str->int false-branch)]
-    {:id monkey
-     :items items
-     :operation-fn op
-     :test-divisor test-divisor
-     :test-true test-true
-     :test-false test-false
+  (let [[idx items op test t f] (-> line (string/split-lines))]
+    {:id (str->int idx)
+     :items (parse-items items)
+     :operation-fn (parse-expr op)
+     :test-divisor (str->int test)
+     :test-true (str->int t)
+     :test-false (str->int f)
      :inspected 0}))
 
 (defn worry-down
