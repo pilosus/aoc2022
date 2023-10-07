@@ -1,7 +1,7 @@
 (ns aoc2022.day3
   "https://adventofcode.com/2022/day/3"
   (:require
-   [aoc2022.aoc2022 :as tools]
+   [aoc2022.tools :as tools]
    [clojure.string :as string]
    [clojure.set :refer [intersection]]))
 

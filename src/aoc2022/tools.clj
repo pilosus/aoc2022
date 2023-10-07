@@ -1,4 +1,4 @@
-(ns aoc2022.aoc2022
+(ns aoc2022.tools
   (:require [clojure.string :as string]))
 
 (defn path->lines

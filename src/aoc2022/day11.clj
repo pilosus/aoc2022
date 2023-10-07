@@ -1,7 +1,7 @@
 (ns aoc2022.day11
   "https://adventofcode.com/2022/day/11"
   (:require
-   [aoc2022.aoc2022 :as tools]
+   [aoc2022.tools :as tools]
    [clojure.core.match :refer [match]]
    [clojure.string :as string]))
 

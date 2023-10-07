@@ -1,7 +1,7 @@
 (ns aoc2022.day6
   "https://adventofcode.com/2022/day/6"
   (:require
-   [aoc2022.aoc2022 :as tools]))
+   [aoc2022.tools :as tools]))
 
 (defn unique-seq?
   [pairs n]

@@ -1,7 +1,7 @@
 (ns aoc2022.day7
   "https://adventofcode.com/2022/day/7"
   (:require
-   [aoc2022.aoc2022 :as tools]
+   [aoc2022.tools :as tools]
    [clojure.string :as string]))
 
 (def command-regex #"(?s)\$\s+(?<cmd>(\w+))\s*(?<dir>(.*))")

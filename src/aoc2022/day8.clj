@@ -1,7 +1,7 @@
 (ns aoc2022.day8
   "https://adventofcode.com/2022/day/8"
   (:require
-   [aoc2022.aoc2022 :as tools]))
+   [aoc2022.tools :as tools]))
 
 (defn matrix-indexed
   "Return a matrix (vector of vectors) with each element indexed

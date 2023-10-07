@@ -1,7 +1,7 @@
 (ns aoc2022.day10
   "https://adventofcode.com/2022/day/10"
   (:require
-   [aoc2022.aoc2022 :as tools]
+   [aoc2022.tools :as tools]
    [clojure.string :as string]))
 
 ;; Part 1 - Signal strength
