@@ -1,6 +1,19 @@
 (ns aoc2022.tools
   (:require [clojure.string :as string]))
 
+(def alphabet "abcdefghijklmnopqrstuvwxyz")
+
+(defn letters
+  []
+  (string/split alphabet #""))
+
+(defn letter->idx
+  ([]
+   (letter->idx 0))
+  ([starting-idx]
+   (let [ls (letters)]
+     (zipmap ls (iterate inc starting-idx)))))
+
 (defn path->lines
   "Return a vector of string read from the file"
   [path]
@@ -26,3 +39,21 @@
   "Parse string into an integer"
   [s]
   (Integer/parseInt s))
+
+;; Matrix ops
+
+(defn matrix-indexed
+  "Return a matrix (vector of vectors) with each element indexed
+  as [[row-idx col-idx] elem], ..."
+  [matrix]
+  (reduce
+   (fn [result [row-idx heights]]
+     (conj
+      result
+      (reduce
+       (fn [row [col-idx height]]
+         (conj row [[row-idx col-idx] height]))
+       []
+       (map-indexed vector heights))))
+   []
+   (map-indexed vector matrix)))

@@ -3,22 +3,6 @@
   (:require
    [aoc2022.tools :as tools]))
 
-(defn matrix-indexed
-  "Return a matrix (vector of vectors) with each element indexed
-  as [[row-idx col-idx] elem], ..."
-  [matrix]
-  (reduce
-   (fn [result [row-idx heights]]
-     (conj
-      result
-      (reduce
-       (fn [row [col-idx height]]
-         (conj row [[row-idx col-idx] height]))
-       []
-       (map-indexed vector heights))))
-   []
-   (map-indexed vector matrix)))
-
 (defn rows->cols
   "Convert given matrix rows into columns"
   [matrix]
@@ -77,7 +61,7 @@
         matrix (->> lines
                     (map tools/str->vec)
                     (mapv #(mapv tools/str->int %))
-                    matrix-indexed)
+                    tools/matrix-indexed)
         visible-coords (matrix->visible-coords matrix)]
     (count visible-coords)))
 
@@ -137,7 +121,7 @@
         scores (->> lines
                     (map tools/str->vec)
                     (mapv #(mapv tools/str->int %))
-                    matrix-indexed
+                    tools/matrix-indexed
                     matrix->scores)
         max-val (apply max (vals scores))]
     max-val))
