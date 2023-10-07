@@ -1,75 +1,7 @@
 (ns aoc2022.day12
   "https://adventofcode.com/2022/day/11"
   (:require
-   [aoc2022.tools :as tools]
-   [clojure.string :as string]))
-
-"
---- Day 12: Hill Climbing Algorithm ---
-
-You try contacting the Elves using your handheld device, but the river
-you're following must be too low to get a decent signal.
-
-You ask the device for a heightmap of the surrounding area (your
-puzzle input). The heightmap shows the local area from above broken
-into a grid; the elevation of each square of the grid is given by a
-single lowercase letter, where a is the lowest elevation, b is the
-next-lowest, and so on up to the highest elevation, z.
-
-Also included on the heightmap are marks for your current position (S)
-and the location that should get the best signal (E). Your current
-position (S) has elevation a, and the location that should get the
-best signal (E) has elevation z.
-
-You'd like to reach E, but to save energy, you should do it in as few
-steps as possible. During each step, you can move exactly one square
-up, down, left, or right. To avoid needing to get out your climbing
-gear, the elevation of the destination square can be at most one
-higher than the elevation of your current square; that is, if your
-current elevation is m, you could step to elevation n, but not to
-elevation o. (This also means that the elevation of the destination
-square can be much lower than the elevation of your current square.)
-
-For example:
-
-Sabqponm
-abcryxxl
-accszExk
-acctuvwj
-abdefghi
-
-Here, you start in the top-left corner; your goal is near the
-middle. You could start by moving down or right, but eventually you'll
-need to head toward the e at the bottom. From there, you can spiral
-around to the goal:
-
-v..v<<<<
->v.vv<<^
-.>vv>E^^
-..v>>>^^
-..>>>>>^
-
-In the above diagram, the symbols indicate whether the path exits each
-square moving up (^), down (v), left (<), or right (>). The location
-that should get the best signal is still E, and . marks unvisited
-squares.
-
-This path reaches the goal in 31 steps, the fewest possible.
-
-What is the fewest steps required to move from your current position
-to the location that should get the best signal?
-
-To begin, get your puzzle input.
-"
-
-;; - parse input to a vector of vectors:
-;;     - substitute letters with corresponing numbers
-;;     - save start/finish positions
-;; - breadth-first search
-;;   - fn to find neigboughs for a given node (position):
-;;     any adjacent cell in u/d/l/r direction that is (<= (- next curr) 1)
-;; - shortest path -> Dijkstra algo?
-;; https://stackoverflow.com/questions/8379785/how-does-a-breadth-first-search-work-when-looking-for-shortest-path
+   [aoc2022.tools :as tools]))
 
 (defn find-key-by-val
   "Return a key mapping to the first occurrence of given value in the map"
@@ -132,8 +64,8 @@ To begin, get your puzzle input.
 
 (defn pos->neighbours
   "Return a vector of neighbours of the given position in the map"
-  [pos game]
-  (let [{:keys [signals max-row max-col]} game
+  [pos area]
+  (let [{:keys [signals max-row max-col]} area
         positions (potential-neigbours pos max-row max-col)
         neighbours (->> positions
                         (filter
@@ -146,7 +78,8 @@ To begin, get your puzzle input.
   "Return a distance map and paths map.
   Distance map has positions as keys and distances to from the start
   position as a value. Distance map allows to find minimum number of
-  hops from the start to a given position.
+  hops from the start to a given position. If (get distance pos) is
+  nil, that means the position is unreachable.
 
   Paths map has positions as keys and parent's position as
   value. Position map allows to track down the shortest path from a
@@ -155,8 +88,8 @@ To begin, get your puzzle input.
   Algorithm is based on the breadth-first search algorithm. If hops
   could have had distance more than 1, Dijkstra's algorithm could have
   been used."
-  [game]
-  (let [{:keys [start finish]} game]
+  [area]
+  (let [{:keys [start finish]} area]
     (loop [queue [start]
            paths {start nil}
            distances {start 0}]
@@ -166,7 +99,7 @@ To begin, get your puzzle input.
           (if (= curr finish)
             [distances paths]
             (let [[queue' paths' distances']
-                  (loop [neighbours (pos->neighbours curr game)
+                  (loop [neighbours (pos->neighbours curr area)
                          qi queue
                          pi paths
                          di distances]
@@ -188,14 +121,55 @@ To begin, get your puzzle input.
                distances'))))))))
 
 (defn shortest-path
+  "Return the shortest path (number of hops) from start to finish"
+  [area]
+  (let [[distances _] (bfs area)]
+    (get distances (:finish area))))
+
+(defn find-shortest-path
   "Find the shortest path (number of hops) from start to finish"
   []
-  (let [game (-> (tools/input-path)
+  (let [area (-> (tools/input-path)
+                 tools/path->lines
+                 init)]
+    (shortest-path area)))
+
+(defn find-starts
+  "Return a vector of starting positions for the given area.
+  Any position with value 0 (equivallent of `a`) can be a staring
+  position."
+  [area]
+  (reduce
+   (fn [init [k v]]
+     (if (= v 0)
+       (conj init k)
+       init))
+   []
+   (:signals area)))
+
+(defn shortest-path-multiple-starts
+  "Find the shortest among the shortest paths starting from any possible
+  starting position"
+  []
+  (let [area (-> (tools/input-path)
                  tools/path->lines
                  init)
-        [distances _] (bfs game)]
-    (get distances (:finish game))))
+        result (->> area
+                    find-starts
+                    (reduce
+                     (fn [init s]
+                       (let [area' (assoc area :start s)
+                             shortest (shortest-path area')]
+                         (conj init shortest)))
+                     [])
+                    ;; remove unreachable starting positions
+                    (remove nil?)
+                    sort
+                    first)]
+    result))
 
 (comment
-  ;; Part 1 - 391
-  (shortest-path))
+  ;; Part 1 - 391 - 30 ms
+  (find-shortest-path)
+  ;; Part 2 - 386 - 3000 ms
+  (shortest-path-multiple-starts))
