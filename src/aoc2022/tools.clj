@@ -21,6 +21,12 @@
       slurp
       string/split-lines))
 
+(defn path->objects
+  "Return a vector of string read from the file with objects separated
+  by a blank line"
+  [path]
+  (-> path slurp (string/split #"\n{2}")))
+
 (defn input-path
   "Return a path to input file for the current namespace"
   []
