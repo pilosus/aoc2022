@@ -40,6 +40,12 @@
   [s]
   (Integer/parseInt s))
 
+;; Vectors
+
+(defn ->v
+  [s]
+  (into [] s))
+
 ;; Matrix ops
 
 (defn matrix-indexed

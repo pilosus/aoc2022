@@ -1,5 +1,5 @@
 (ns aoc2022.day12
-  "https://adventofcode.com/2022/day/11"
+  "https://adventofcode.com/2022/day/12"
   (:require
    [aoc2022.tools :as tools]))
 
