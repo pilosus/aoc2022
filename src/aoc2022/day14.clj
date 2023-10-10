@@ -74,8 +74,8 @@
 
 ;; Sand mechanics
 
-(defn find-void-border
-  "The void borderline is a lowest row of rocks"
+(defn find-void-floor
+  "The void floor is a lowest row of rocks"
   [rocks]
   (let [gr (group-by first rocks)
         lowest-row (->> gr
@@ -97,13 +97,13 @@
 (defn sand-next-pos
   "Return next position of the sand and the flag if it's blocked"
   [pos tiles]
-  (let [{:keys [blocks border]} tiles
+  (let [{:keys [blocks floor]} tiles
         [row col] pos
         down [(inc row) col]
         down-left [(inc row) (dec col)]
         down-right [(inc row) (inc col)]]
     (cond
-      (overflow? pos border) :void
+      (overflow? pos floor) :void
       (not-in? blocks down) down
       (not-in? blocks down-left) down-left
       (not-in? blocks down-right) down-right
@@ -132,9 +132,9 @@
 (defn init-tiles
   "Return an initial tiles map"
   [rocks]
-  (let [border (find-void-border rocks)]
+  (let [floor (find-void-floor rocks)]
     {:blocks rocks
-     :border border
+     :floor floor
      :pouring [0 500]
      :status :ok
      :iter 0}))
