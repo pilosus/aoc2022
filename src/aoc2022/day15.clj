@@ -16,7 +16,7 @@
 ;; them in a set may be ineffective! Given that the range is
 ;; continious monotonic sequence of integers, we may want to keep
 ;; only [from, to). Then the task will boil down to:
-;; - finding an overlap of all the ranges
+;; - finding a union of all intervals (interval/segment tree?)
 ;; - removing column numbers of given sensors and beacons from the overlap
 (defn cols-within-distance
   "Return a set of columns of positions for a given row that are within
@@ -59,10 +59,12 @@
 (def pos-regex #"(?s).*x=(?<sc>-?\d+), y=(?<sr>-?\d+):.*x=(?<bc>-?\d+), y=(?<br>-?\d+)")
 
 (defn ->int
+  "Parse string into integer"
   [s]
   (Integer/parseInt s))
 
 (defn line->pos
+  "Parse a line of input into a vector of two pos for a sensor and a beacon"
   [line]
   (let [m (re-matcher pos-regex line)]
     (if (.matches m)
@@ -72,24 +74,6 @@
                                (map ->int))]
         [[sr sc] [br bc]])
       (throw (Exception. (format "Cannot parse a line: %s" line))))))
-
-(defn occupied
-  "Given a seq of all sensor/beacon position pairs, return a flat set of
-  positions occupied by either a sensor or a beacon"
-  [pos-seq]
-  (reduce
-   (fn [init pair]
-     (let [[sensor beacon] pair]
-       (conj init sensor beacon)))
-   (set [])
-   pos-seq))
-
-(defn row-coverage
-  "Find coverage for a given set of coverages and a row number"
-  [coverages row]
-  (->> coverages
-       (filter (fn [[r _]] (= r row)))
-       (into #{})))
 
 (defn pos->coverage
   "Given a sequence of [sensor beacon] positions, return a set of all
