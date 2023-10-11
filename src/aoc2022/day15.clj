@@ -64,15 +64,23 @@
    (set [])
    pos-seq))
 
+(defn row-coverage
+  "Find coverage for a given set of coverages and a row number"
+  [coverages row]
+  (->> coverages
+       (filter (fn [[r _]] (= r row)))
+       (into #{})))
+
 (defn pos->coverage
   "Given a sequence of [sensor beacon] positions, return a set of all
-  coverages"
-  [pos-seq]
+  coverages for a given row"
+  [pos-seq row]
   (let [full (reduce
               (fn [init e]
                 (let [[sensor beacon] e
-                      cov (coverage sensor beacon)]
-                  (s/union init cov)))
+                      full-cov (coverage sensor beacon)
+                      row-cov (row-coverage full-cov row)]
+                  (s/union init row-cov)))
               (set [])
               pos-seq)
         occ (occupied pos-seq)]
@@ -88,12 +96,6 @@
      :row-max (-> rows last first)
      :col-min (-> cols first second)
      :col-max (-> cols last second)}))
-
-(defn row-coverage
-  "Find coverage for a given set of all coverages and a row number"
-  [coverages row]
-  (let [row-cov (filter (fn [[r _]] (= r row)) coverages)]
-    row-cov))
 
 ;; test data
 
@@ -115,17 +117,16 @@
 
 (comment
   (def tp (->> tl (map line->pos)))
-  (def tc (pos->coverage tp))
+  (def tr 10)
+  (def tc (pos->coverage tp tr))
   ;; 26 positions
-  (def rcov (count (row-coverage tc 10))))
+  (count tc))
 
 (defn positions-without-beacons
   [lines row]
-  (let [pos (->> lines
-                 (map line->pos))
-        cov (pos->coverage pos)
-        result (row-coverage cov row)]
-    result))
+  (let [pos (map line->pos lines)
+        cov (pos->coverage pos row)]
+    cov))
 
 (defn count-positions
   []
@@ -133,3 +134,10 @@
                   tools/path->lines)
         result (positions-without-beacons lines 2000000)]
     (count result)))
+
+;; real data
+
+(comment
+  (def lines (-> (tools/input-path)
+                 tools/path->lines))
+  (def pos (map line->pos lines)))
