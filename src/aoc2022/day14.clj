@@ -86,27 +86,38 @@
 (defn overflow?
   "The easiest way to check if the position is in the void, is to check
   if it's below the lowest possible rock row."
-  [pos lowest-row]
-  (let [[row _] pos]
-    (> row lowest-row)))
+  [pos tiles]
+  (let [{:keys [floor]} tiles
+        [row _] pos]
+    (> row floor)))
 
 (defn not-in?
-  [coll k]
-  (not (contains? coll k)))
+  [tiles pos]
+  (let [{:keys [blocks floor infinite-floor]} tiles
+        [row _] pos]
+    (cond
+      (and (= row floor) infinite-floor) false
+      (contains? blocks pos) false
+      :else true)))
+
+(defn full?
+  [pos tiles]
+  (let [{:keys [pouring infinite-floor]} tiles]
+    (and infinite-floor (= pos pouring))))
 
 (defn sand-next-pos
   "Return next position of the sand and the flag if it's blocked"
   [pos tiles]
-  (let [{:keys [blocks floor]} tiles
-        [row col] pos
+  (let [[row col] pos
         down [(inc row) col]
         down-left [(inc row) (dec col)]
         down-right [(inc row) (inc col)]]
     (cond
-      (overflow? pos floor) :void
-      (not-in? blocks down) down
-      (not-in? blocks down-left) down-left
-      (not-in? blocks down-right) down-right
+      (overflow? pos tiles) :overflow
+      (not-in? tiles down) down
+      (not-in? tiles down-left) down-left
+      (not-in? tiles down-right) down-right
+      (full? pos tiles) :full
       :else :block)))
 
 (defn move-sand
@@ -115,7 +126,10 @@
          ts tiles]
     (let [next-pos (sand-next-pos pos ts)]
       (cond
-        (= next-pos :void) (assoc tiles :status :void)
+        (= next-pos :overflow) (assoc tiles :status :overflow)
+        (= next-pos :full) (-> tiles
+                               (assoc :status :full)
+                               (update :blocks conj pos))
         (= next-pos :block) (update tiles :blocks conj pos)
         :else (recur next-pos ts)))))
 
@@ -124,43 +138,41 @@
   [tiles]
   (loop [iter 0
          ts tiles]
-    (if (= (:status ts) :void)
-      ;; Iterations before void reached, hence (dec iter)
-      (assoc ts :iter (dec iter))
-      (recur (inc iter) (move-sand (:pouring ts) ts)))))
+    (cond
+      (= (:status ts) :overflow) (assoc ts :iter (dec iter))
+      (= (:status ts) :full) (assoc ts :iter iter)
+      :else (recur (inc iter) (move-sand (:pouring ts) ts)))))
 
 (defn init-tiles
   "Return an initial tiles map"
-  [rocks]
-  (let [floor (find-void-floor rocks)]
-    {:blocks rocks
-     :floor floor
-     :pouring [0 500]
-     :status :ok
-     :iter 0}))
-
-(comment
-  ;; Test data
-  (let [ls ["498,4 -> 498,6 -> 496,6"
-            "503,4 -> 502,4 -> 502,9 -> 494,9"]
-        rs (lines->rocks ls)
-        ts (init-tiles rs)
-        result (sand-flow ts)]
-    result))
+  ([rocks]
+   (init-tiles {:infinite-floor false} rocks))
+  ([opts rocks]
+   (let [{:keys [infinite-floor]} opts
+         void (find-void-floor rocks)
+         floor (if infinite-floor (+ 2 void) void)]
+     {:blocks rocks
+      :floor floor
+      :infinite-floor infinite-floor
+      :pouring [0 500]
+      :status :running
+      :iter 0})))
 
 ;; Entrypoint
 
 (defn count-until-overflow
   "Return number of sands to settle before the overflow"
-  []
+  [opts]
   (let [lines (-> (tools/input-path)
                   tools/path->lines)
         flow (->> lines
                   lines->rocks
-                  init-tiles
+                  (init-tiles opts)
                   sand-flow)]
     (:iter flow)))
 
 (comment
   ;; Part 1 - 817 - 87ms
-  (count-until-overflow))
+  (count-until-overflow {:infinite-floor false})
+  ;; Part 2 - 23416 - 2400ms
+  (count-until-overflow {:infinite-floor true}))
