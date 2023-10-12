@@ -34,22 +34,13 @@
   "Return an interval [from-col, to-col] for a given row that covers pos
   within the given Manhattan distance"
   [pos d row]
-  (let [[r c] pos]
-    (if (or (< row (- r d)) (> row (+ r d)))
-      nil
-      (let [from (->> (range (- c d) (+ c 1))
-                      (take-while
-                       (fn [c']
-                         (let [d' (distance pos [row c'])]
-                           (>= d' d))))
-                      last)
-            to (->> (range c (+ c d 1))
-                    (drop-while
-                     (fn [c']
-                       (let [d' (distance pos [row c'])]
-                         (< d' d))))
-                    first)]
-        [from to]))))
+  (let [[r c] pos
+        dist-at-row (abs (- row r))
+        from (- c (- d dist-at-row))
+        to (+ c (- d dist-at-row))]
+    (if (<= dist-at-row d)
+      [from to]
+      nil)))
 
 (defn merge-intervals
   "Given a sequnce of intervals [from, to], return a vector of merged
@@ -157,35 +148,30 @@
                         intervals (poss->intervals poss row limits)
                         cnt (count-pos intervals)]
                     (if (< cnt expected)
-                      [row intervals]
+                      (let [[[_ i1c] [_ i2c]] intervals]
+                        (if (< i1c i2c)
+                          [row (inc i1c)]
+                          (throw (ex-info "Intervals assumption failed"
+                                          {:intervals intervals}))))
                       (recur (next rows))))
                   nil))]
     found))
 
-(comment
-  (let [tlines ["Sensor at x=2, y=18: closest beacon is at x=-2, y=15"
-                "Sensor at x=9, y=16: closest beacon is at x=10, y=16"
-                "Sensor at x=13, y=2: closest beacon is at x=15, y=3"
-                "Sensor at x=12, y=14: closest beacon is at x=10, y=16"
-                "Sensor at x=10, y=20: closest beacon is at x=10, y=16"
-                "Sensor at x=14, y=17: closest beacon is at x=10, y=16"
-                "Sensor at x=8, y=7: closest beacon is at x=2, y=10"
-                "Sensor at x=2, y=0: closest beacon is at x=2, y=10"
-                "Sensor at x=0, y=11: closest beacon is at x=2, y=10"
-                "Sensor at x=20, y=14: closest beacon is at x=25, y=17"
-                "Sensor at x=17, y=20: closest beacon is at x=21, y=22"
-                "Sensor at x=16, y=7: closest beacon is at x=15, y=3"
-                "Sensor at x=14, y=3: closest beacon is at x=15, y=3"
-                "Sensor at x=20, y=1: closest beacon is at x=15, y=3"]
-        lines (-> (tools/input-path)
+(defn part1
+  []
+  (let [lines (-> (tools/input-path)
                   tools/path->lines)]
+    (count-unvailable-pos lines 2000000 {:exclude-occupied? true})))
 
-    ;; Part 1 - 5176944 - 1700 ms
-    ;; test
-    (count-unvailable-pos tlines 10 {:exclude-occupied? true})
-    ;; prod
-    (count-unvailable-pos lines 2000000 {:exclude-occupied? true})
+(defn part2
+  []
+  (let [lines (-> (tools/input-path)
+                  tools/path->lines)
+        [row col] (first-available-pos lines [0 4000000])]
+    (+ (* col 4000000) row)))
 
-    ;; Part 2
-    ;; test
-    (first-available-pos tlines [0 20])))
+(comment
+  ;; Part 1 - 5176944 - 1.2ms
+  (part1)
+  ;; Part 2 - 13350458933732 - 28546 ms
+  (part2))
