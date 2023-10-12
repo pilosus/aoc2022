@@ -148,11 +148,12 @@
                         intervals (poss->intervals poss row limits)
                         cnt (count-pos intervals)]
                     (if (< cnt expected)
-                      (let [[[_ i1c] [_ i2c]] intervals]
-                        (if (< i1c i2c)
-                          [row (inc i1c)]
-                          (throw (ex-info "Intervals assumption failed"
-                                          {:intervals intervals}))))
+                      ;; assume the only available pos is
+                      ;; between two intervals
+                      [row (-> intervals
+                               first
+                               second
+                               inc)]
                       (recur (next rows))))
                   nil))]
     found))
