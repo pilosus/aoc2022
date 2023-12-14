@@ -21,6 +21,13 @@
       slurp
       string/split-lines))
 
+(defn path->line
+  "Return a string read from the file"
+  [path]
+  (-> path
+      slurp
+      string/trim))
+
 (defn path->objects
   "Return a vector of string read from the file with objects separated
   by a blank line"
