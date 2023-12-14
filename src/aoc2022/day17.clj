@@ -161,12 +161,17 @@
   [board iterations]
   (process board 0 iterations))
 
-(defn tower-height
-  [rocks]
+;; launch
+
+(defn get-board
+  []
   (let [pattern (-> (tools/input-path)
-                    tools/path->line)
-        board (board-init pattern)
-        board-processed (process-rocks board rocks)]
+                    tools/path->line)]
+    (board-init pattern)))
+
+(defn tower-height
+  [board rocks]
+  (let [board-processed (process-rocks board rocks)]
     (:top-row board-processed)))
 
 ;; testing
@@ -175,12 +180,19 @@
   (let [board (board-init PATTERN-TEST)]
     (:top-row (process-rocks board rocks))))
 
-;; 3217
-(defn part1 [] (tower-height 2022))
+;; 3217 - 60ms
+(defn part1 [] (tower-height (get-board) 2022))
 
-;; TODO improve performance ideas
-;; 1. mod division - overwrite result, don't allow pattern-idx grow
-;; 2. outline board poss, don't keep all the cells to reduce `hit?` perf
-;; 3. is there a pattern, how the rocks fallen repeat themselves?
-;;    any relations between the pattern-index and rock-index?
-(defn part2 [] (tower-height 1000000000000))
+;; FIXME improve performance ideas
+;; Find cyclic patterns in the {:poss board}
+;; The pattern of rocks must repeat itself
+;; Once pattern is known, find out
+;; how many patterns 1000000000000 includes.
+;; To find a pattern, run more emulations,
+;; e.g. (* (count (:pattern board)) 10) ~= 100k rocks
+;; How to find a pattern?
+;; 1. Every time (= (mod (count (rest (:poss board))) 2) 0),
+;;    divide vector into two parts and compare, or
+;; 2. Instead of vectors of values, compare vector of height growth/delta
+;;    after each rock is landed
+(defn part2 [] (tower-height (get-board) 1000000000000))
