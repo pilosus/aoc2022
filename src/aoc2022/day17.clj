@@ -27,6 +27,7 @@
    :heights []
    :rock nil
    :rocks ROCKS
+   :rocks-count (count ROCKS)
    :rock-idx 0
    :poss BOARD
    :max-col 6
@@ -57,9 +58,9 @@
 (defn land-rock
   "Update the board with the rock's coords"
   [board]
-  (let [{:keys [poss rock top-row]} board
+  (let [{:keys [poss rock rocks-count top-row]} board
         rock-top-row (find-highest-row rock)
-        top (max rock-top-row top-row)
+        top-new (max rock-top-row top-row)
         poss-new (reduce (fn [acc [row col]]
                            (let [vs (or (nth acc row nil) [])
                                  vs-new (insert-sorted vs col)]
@@ -71,12 +72,12 @@
         ;; for the same height delta, same rock, at the same gas direction
         heights (conj
                  (:heights board)
-                 [(- rock-top-row top-row)
-                  (mod iteration (count ROCKS))
+                 [(- top-new top-row)
+                  (mod iteration rocks-count)
                   (mod (:pattern-idx board) (:pattern-size board))])]
     (assoc
      board
-     :top-row top
+     :top-row top-new
      :poss poss-new
      :hit? false
      :iteration iteration
@@ -209,7 +210,20 @@
       :top-row))
 
 ;; Part 2
-;; pattern repeats with the step 1745
+(defn experiment-real
+  "Return a test board after given number of rocks fallen"
+  [rocks]
+  (process-rocks (board-real-init) rocks))
+
+(def ER (experiment-real 10000))
+
+(defn experiment-test
+  "Return a real board after given number of rocks fallen"
+  [rocks]
+  (process-rocks (board-test-init) rocks))
+
+(def ET (experiment-test 10000))
+
 (defn find-indices
   "Return a list of all indices where given element occurs in the given coll"
   [coll el]
@@ -223,7 +237,7 @@
   ([]
    (find-cycle (process-rocks (board-real-init) 10000)))
   ([board]
-   (let [rocks-size (count ROCKS)
+   (let [rocks-count (:rocks-count board)
          experiment-iterations (:iteration board)
          {:keys [heights top-row pattern-idx pattern-size]} board
          freqs (frequencies heights)
@@ -246,7 +260,7 @@
          start-idx (->> heights
                         (filter
                          (fn [[_ r p]]
-                           (and (= r (mod experiment-iterations rocks-size))
+                           (and (= r (mod experiment-iterations rocks-count))
                                 (= p (mod pattern-idx pattern-size)))))
                         first
                         (find-indices heights)
@@ -277,6 +291,9 @@
       :remainder-sum remainder-sum
       :total total-height})))
 
-;; TODO
+;; Part 2 - 2109 ms with 10'000 rocks experiment board
 (defn part2
-  [])
+  []
+  (-> ER
+      find-cycle
+      :total))
