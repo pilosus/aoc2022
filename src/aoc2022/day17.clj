@@ -13,6 +13,7 @@
 (def ROCKS [R1 R2 R3 R4 R5])
 (def BOARD [[0 1 2 3 4 5 6]])
 (def PATTERN-TEST ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>")
+(def PART2-ROCKS 1000000000000)
 
 ;; Logic
 
@@ -21,6 +22,9 @@
   {:top-row 0
    :pattern pattern
    :pattern-idx 0
+   :pattern-size (count pattern)
+   :iteration 0
+   :heights []
    :rock nil
    :rocks ROCKS
    :rock-idx 0
@@ -59,8 +63,24 @@
         poss-new (reduce (fn [acc [row col]]
                            (let [vs (or (nth acc row nil) [])
                                  vs-new (insert-sorted vs col)]
-                             (assoc acc row vs-new))) poss (sort rock))]
-    (assoc board :top-row top :poss poss-new :hit? false)))
+                             (assoc acc row vs-new))) poss (sort rock))
+        iteration (inc (:iteration board))
+        ;; `heights` is a vector that contains:
+        ;; [height-delta rock-idx pattern-idx]
+        ;; presumably, the pattern repeats after a while:
+        ;; for the same height delta, same rock, at the same gas direction
+        heights (conj
+                 (:heights board)
+                 [(- rock-top-row top-row)
+                  (mod iteration (count ROCKS))
+                  (mod (:pattern-idx board) (:pattern-size board))])]
+    (assoc
+     board
+     :top-row top
+     :poss poss-new
+     :hit? false
+     :iteration iteration
+     :heights heights)))
 
 (defn in?
   "contains? for vectors"
@@ -98,8 +118,8 @@
 (defn direction
   "Return horizontal direction based on the current iteration"
   [board]
-  (let [pattern (:pattern board)
-        idx (mod (:pattern-idx board) (count pattern))]
+  (let [{:keys [pattern pattern-size]} board
+        idx (mod (:pattern-idx board) pattern-size)]
     (nth pattern idx)))
 
 (defmulti update-rock :to)
@@ -163,36 +183,100 @@
 
 ;; launch
 
-(defn get-board
+(defn board-real-init
   []
   (let [pattern (-> (tools/input-path)
                     tools/path->line)]
     (board-init pattern)))
 
-(defn tower-height
-  [board rocks]
-  (let [board-processed (process-rocks board rocks)]
-    (:top-row board-processed)))
+(defn board-test-init
+  []
+  (board-init PATTERN-TEST))
 
-;; testing
+;; Part testing
 (defn part-test
-  [rocks]
-  (let [board (board-init PATTERN-TEST)]
-    (:top-row (process-rocks board rocks))))
+  ([]
+   (part-test 2022))
+  ([rocks]
+   (-> (board-test-init)
+       (process-rocks rocks)
+       :top-row)))
 
-;; 3217 - 60ms
-(defn part1 [] (tower-height (get-board) 2022))
+;; Part 1 - 3217 - 60ms
+(defn part1 []
+  (-> (board-real-init)
+      (process-rocks 2022)
+      :top-row))
 
-;; FIXME improve performance ideas
-;; Find cyclic patterns in the {:poss board}
-;; The pattern of rocks must repeat itself
-;; Once pattern is known, find out
-;; how many patterns 1000000000000 includes.
-;; To find a pattern, run more emulations,
-;; e.g. (* (count (:pattern board)) 10) ~= 100k rocks
-;; How to find a pattern?
-;; 1. Every time (= (mod (count (rest (:poss board))) 2) 0),
-;;    divide vector into two parts and compare, or
-;; 2. Instead of vectors of values, compare vector of height growth/delta
-;;    after each rock is landed
-(defn part2 [] (tower-height (get-board) 1000000000000))
+;; Part 2
+;; pattern repeats with the step 1745
+(defn find-indices
+  "Return a list of all indices where given element occurs in the given coll"
+  [coll el]
+  (let [coll-indexed (map-indexed vector coll)]
+    (->> coll-indexed
+         (filter #(= (second %) el))
+         (map first))))
+
+(defn find-cycle
+  "Find cyclic data in the board"
+  ([]
+   (find-cycle (process-rocks (board-real-init) 10000)))
+  ([board]
+   (let [rocks-size (count ROCKS)
+         experiment-iterations (:iteration board)
+         {:keys [heights top-row pattern-idx pattern-size]} board
+         freqs (frequencies heights)
+         max-repeats (->> freqs
+                          (map (fn [n] (last n)))
+                          (apply max))
+         max-repeated (->> freqs
+                           (filter (fn [[_ v]] (= v max-repeats)))
+                           (map (fn [[k _]] k)))
+         cycles (->> max-repeated
+                     (map (fn [el] (find-indices heights el)))
+                     (map (fn [xs] (->> xs
+                                        reverse
+                                        (partition 2 1)
+                                        (map (fn [[a b]] (- a b))))))
+                     flatten
+                     (into (set [])))
+         _ (assert (= (count cycles) 1))
+         cycle-size (first cycles)
+         start-idx (->> heights
+                        (filter
+                         (fn [[_ r p]]
+                           (and (= r (mod experiment-iterations rocks-size))
+                                (= p (mod pattern-idx pattern-size)))))
+                        first
+                        (find-indices heights)
+                        first
+                        inc)
+         last-idx (+ start-idx cycle-size)
+         cycle-heights (subvec heights start-idx last-idx)
+         cycle-sum (->> cycle-heights
+                        (map first)
+                        (apply +))
+         rocks-left (- PART2-ROCKS experiment-iterations)
+         full-cycles (quot rocks-left cycle-size)
+         remainder (rem rocks-left cycle-size)
+         remainder-sum (->> cycle-heights
+                            (take remainder)
+                            (map first)
+                            (apply +))
+         total-height (+ top-row
+                         (* full-cycles cycle-sum)
+                         remainder-sum)]
+     {:experiment-size experiment-iterations
+      :top-row top-row
+      :pattern-idx pattern-idx
+      :pattern-size pattern-size
+      :cycle-size cycle-size
+      :cycle-heights cycle-heights
+      :cycle-sum cycle-sum
+      :remainder-sum remainder-sum
+      :total total-height})))
+
+;; TODO
+(defn part2
+  [])
