@@ -36,12 +36,15 @@
 
 (defn input-path
   "Return a path to input file for the current namespace"
-  []
-  (let [day (-> *ns*
-                str
-                (string/split #"\.")
-                last)]
-    (format "resources/input/%s.txt" day)))
+  ([]
+   (input-path false))
+  ([test?]
+   (let [day (-> *ns*
+                 str
+                 (string/split #"\.")
+                 last)
+         postfix (if test? ".test" "")]
+     (format "resources/input/%s%s.txt" day postfix))))
 
 (defn str->vec
   "Return a vector of letters"
